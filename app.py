@@ -1,8 +1,13 @@
+import os
+from dotenv import load_dotenv
 import requests
 import json
 import schedule
 import time
 from playsound import playsound
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def fetch_and_print_data():
@@ -11,7 +16,6 @@ def fetch_and_print_data():
     print("*" * 50 + "\n")
     url = "https://www.cinemas.nos.pt/graphql/execute.json/cinemas/getTopMovies"
     response = requests.get(url)
-
     if response.status_code == 200:
         data = json.loads(response.text)
         items = data["data"]["movieList"]["items"]
@@ -34,6 +38,16 @@ def fetch_and_print_data():
             # Play an alert sound
             # You need to have a file called 'alert.mp3' in the same directory
             playsound('alert.mp3')
+
+            # Send message to Discord
+            webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
+            message = "Movies with 'Oppenheimer' in the original title found. Check the console for details."
+            data = {
+                "content": message
+            }
+            discord_response = requests.post(webhook_url, json=data)
+            if discord_response.status_code != 204:
+                print("Failed to send message to Discord.")
         else:
             print("\nNo movie with 'Oppenheimer' in the original title found.")
     else:
@@ -45,7 +59,7 @@ def fetch_and_print_data():
 
 
 if __name__ == "__main__":
-   # Display a message when the script starts running
+    # Display a message when the script starts running
     print("Script started. Fetching and printing data every hour.")
 
     # Run the script immediately
